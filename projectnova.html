@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    
+    <meta charset="UTF-8">
+    <title>PROJECT NOVA</title>
+    <style>
+        #disclaimer {
+            position: absolute;
+            bottom: 15px; /* distance from bottom of the box */
+            left: 50%;
+            transform: translateX(-50%); /* perfectly center the text */
+            color: rgba(255, 153, 0, 0.6); /*orange, semi transparent */
+            font-size: 14px;
+            text-shadow: 0 0 5px rgba(255, 153, 0, 0.4); /* subtle glow */
+            pointer-events: none; /* makes sure text isnt clickable */
+        }
+        body {
+            font-family: 'Courier New', Courier, monospace;
+            background: radial-gradient(#2a2a2a, #0a0a0a);
+            color: #FFCC00; /* changed to uppercase hex */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+        }
+
+        h1 {
+            text-align: center;
+            color: #ff6600;
+            text-shadow: 0 0 8px #ff9900;
+        }
+
+        #game-container {
+            width: 80%;
+            max-width: 800px;
+            background-color: #111;
+            /* background-color: #0c0c0c; */
+            border-radius: 10px;
+            border: 1px solid #ff9900;
+            padding: 20px;
+            box-shadow: 0 0 25px rgba(255, 153, 0, 0.5);
+            /* added a transition so the animations reset smoothly */
+            transition: transform 0.3s ease, box-shadow 0.3s ease, opacity 0.5s ease;
+            position: relative; /* this is the crucial line that acts as the anchor */
+            overflow: hidden; /* ensures animations stay within bounds */
+        }
+        #story-text {
+            background-color: #1a1a1a;
+            padding: 15px;
+            border-radius: 4px;
+            min-height: 80px;
+            border-left: 4px solid #ff0066;
+        }
+
+        #code-editor {
+            width: 98%;
+            height: 150px;
+            background-color: #000000;
+            color: #ffcc00;
+            border: 1px solid #ff9900;
+            font-size: 16px;
+            padding: 10px;
+            white-space: pre;
+            resize: vertical;
+            margin-top: 15px;
+        }
+
+        #output-area {
+            width: 98%;
+            min-height: 40px;
+            background-color: #000;
+            color: #ff6600; /* success color */
+            border: 1px solid #ff9900;
+            padding: 10px;
+            margin-top: 10px;
+            font-weight: 700; /* changed to number */
+            white-space: pre-wrap;
+        }
+        /* idea for later
+        .output-glow {
+            box-shadow: 0 0 15px #ff6600;
+        }
+        */
+
+        #run-button {
+            background: linear-gradient(90deg, #ff6600, #ffcc00);
+            color: black;
+            padding: 12px 20px;
+            border: none;
+            cursor: pointer;
+            border-radius: 4px;
+            font-size: 16px;
+            margin-top: 15px;
+            display: block;
+            width: 100%;
+            font-weight: bold;
+            transition: background 0.3s ease;
+        }
+        #run-button:hover { background: linear-gradient(90deg, #ffcc00, #ff6600); }
+        #run-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background: linear-gradient(90deg, #553300, #886600);
+        }
+
+        .success { color: #ff6600; }
+        .error { color: #ff3300; } /* error color */
+        
+        /* animations i just added for level transitioning */
+
+        #game-container.animate-grid-reveal::before {
+            content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background-image: linear-gradient(0deg, transparent 95%, rgba(255,102,0,0.2) 100%), linear-gradient(90deg, transparent 95%, rgba(255,102,0,0.2) 100%);
+            background-size: 20px 20px; animation: gridFade 2s forwards; z-index: 10;
+        }
+        @keyframes gridFade { 0% { opacity: 1; transform: scale(1); } 100% { opacity: 0; transform: scale(1.1); } }
+
+        .animate-dissolve { animation: dissolve 1.5s forwards; }
+        @keyframes dissolve {
+            0% { box-shadow: 0 0 25px rgba(255,153,0,0.5); } 50% { box-shadow: 0 0 80px 30px #fff; opacity: 0.5; } 100% { box-shadow: 0 0 25px rgba(255,153,0,0.5); opacity: 1; }
+        }
+
+        .animate-quantum-unlock { animation: quantumUnlock 1.5s forwards; }
+        @keyframes quantumUnlock {
+            0%, 50%, 100% { transform: scale(1); box-shadow: 0 0 25px rgba(255,153,0,0.5); }
+            25%, 75% { transform: scale(1.03); box-shadow: 0 0 60px rgba(0,255,255,0.8), 0 0 100px rgba(0,255,255,0.6); }
+        }
+
+        .animate-flight-path { animation: flightPath 1.2s ease-in-out forwards; }
+        @keyframes flightPath {
+            0%, 100% { transform: translateX(0px); filter: blur(0px); }
+            25% { transform: translateX(-25px); filter: blur(1.5px); }
+            75% { transform: translateX(25px); filter: blur(1.5px); }
+        }
+        
+        /* level 5: system fracturing */
+        .animate-fracture { animation: fracture 1s forwards; }
+        @keyframes fracture {
+            0%, 100% { transform: translate(0, 0) skew(0, 0); }
+            10% { transform: translate(-5px, 2px) skew(-1deg, 2deg); border-color: white; }
+            30% { transform: translate(3px, -4px) skew(2deg, -1deg); }
+            50% { transform: translate(-4px, 3px) skew(-2deg, 1deg); border-color: #ff3300; }
+            70% { transform: translate(5px, -2px) skew(1deg, -2deg); }
+            90% { transform: translate(-2px, 4px) skew(-1deg, 2deg); }
+        }
+        /* new gif animation for ai level */
+        #level-gif {
+            display: none; /* hidden by default */
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;   
+            height: 100%;  
+            object-fit: cover; /* prevents the gif from stretching */
+            opacity: 0;
+            z-index: 20; /* make sure its on top */
+            border-radius: 10px;
+        }
+        #level-gif.show {
+            display: block;
+            opacity: 0.1; /* slightly transparent */
+            transition: opacity 0.5s, filter 0.5s ease-out; /* little fade in */
+            filter: hue-rotate(150deg) saturate(250%) brightness (110%); /* im making the gif more orange tinted bc its blue */
+        }
+        
+        /* level 6: WIP 
+        #game-container.animate-ai-awaken::before {
+            content: ''; position: absolute; top: 50%; left: 50%; width: 0px; height: 4px;
+            background: #ff3300; border-radius: 50%;
+            box-shadow: 0 0 15px 5px #ff3300, 0 0 30px 10px #ff6600;
+            transform: translate(-50%, -50%);
+            animation: awakenAI 3s forwards; z-index: 10;
+        }
+           scrapping for now */
+            
+        /* scrapped cuz doesnt look good
+           @keyframes awakenAI {
+            0% { width: 0px; height: 4px; } 
+            20% { width: 100px; height: 60px; } 
+            40% { transform: translate(-50%, -50%) translateX(-20px); } 
+            60% { transform: translate(-50%, -50%) translateX(20px); } 
+            80% { transform: translate(-50%, -50%) translateX(0px); } 
+            100% { width: 0px; height: 4px; opacity: 0; } 
+        }
+        */
+        
+        /* last level complete animation */
+        .alias-overlay {
+            position: absolute; top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 80px; font-weight: bold; color: #ffcc00;
+            text-shadow: 0 0 10px #ffcc00, 0 0 20px #ff6600;
+            opacity: 0; z-index: 20;
+            animation: burnInAlias 3s forwards;
+        }
+        @keyframes burnInAlias {
+            0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
+            50% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; text-shadow: 0 0 20px #fff, 0 0 40px #ffcc00, 0 0 60px #ff6600; }
+            100% { transform: translate(-50%, -50%) scale(1); opacity: 0; }
+        }
+
+        .animate-error-shake { animation: errorShake 0.4s ease-in-out; }
+        @keyframes errorShake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-5px); }
+            40%, 80% { transform: translateX(5px); }
+        }
+
+    </style>
+</head>
+<body class="game-body">
+    <div id='game-container'>
+        <h1>PROJECT NOVA</h1>
+        <img id="level-gif" src="https://i.pinimg.com/originals/a1/3f/15/a13f1582cc96928bac80487a3793cabe.gif" alt="Level Animation">
+        <div id="story-text"></div>
+        <textarea id="code-editor" spellcheck=false placeholder="Type your Python code here..."></textarea>
+        <button id="run-button" onclick='runCode()'>Execute Hack</button>
+        <pre id="output-area"></pre>
+        
+        
+    </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/skulpt@1.2.0/dist/skulpt.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/skulpt@1.2.0/dist/skulpt-stdlib.js"></script>
+    
+<script>
+        // all the game levels go here
+        var levelsData = [
+            { //0 grid
+                story: `The year is 2242. You live in <strong>Helios City</strong>, which runs on pure energy. You’re an underground hacker trying to take down <strong>Sunstrike Industries</strong>, the evil mega corporation in the city that controls all the world's light and data. You have dubbed this undertaking <strong>PROJECT NOVA</strong>. Your first target: their main authentication gate.<br><br><strong>Mission:</strong> Use <strong>print()</strong> to display the access phrase: '<strong>GRID ONLINE</strong>'<br><br><em>Hint: To print words, use print() with the text inside quotes, like this: print('Hello!')</em>`,
+                validate: (output) => output.trim().toUpperCase() === 'GRID ONLINE',
+                success: "🚪Gate bypassed. You’ve entered the grid.",
+                animationClass: 'animate-grid-reveal'
+            },
+            { //1 firewall
+                story: `A shifting wall of light shimmers before you. It's a <strong>data firewall</strong>. The system prompt says: <strong><em>'Energy credits required for access: 50. Bypass charge: 8.'</em></strong><br><br><strong>Mission:</strong> Create a variable named <strong>credits</strong> with value <strong>50</strong>. Subtract <strong>8</strong> for the charge and <strong>print</strong> the remaining balance.<br><br><em>Hint: Create a variable with = (ex. credits = 50) and use the - symbol to subtract.</em>`,
+                validate: (output) => output.trim() === "42",
+                success: "💳Transaction authorized. The light wall dissolves...",
+                animationClass: 'animate-dissolve'
+            },
+            { //2 unlock
+                story: `You reach a quantum data lock glowing with golden static. Lines of shifting code show a phrase on the terminal:<br><em>'Only the enlightened may pass.'</em><br><br><strong>Mission:</strong> Create a variable named <strong>answer</strong> with the value '<strong>ENLIGHTENED</strong>' If <strong>answer == 'ENLIGHTENED'</strong>, print '<strong>Key Accepted</strong>'.<br><br><em>Hint: An if statement checks if something is true. It looks like this:<br><br>if your_variable == 'text':<br><br>Be sure to indent the next line with the <strong>Tab</strong> key!</em>`,
+                validate: (output) => output.trim().toLowerCase() === "key accepted",
+                success: "🔓Quantum lock synchronized. Secure channel access established.",
+                animationClass: 'animate-quantum-unlock'
+            },
+            { //3 drones
+                story: `Photon powered drones patrol overhead, waiting for a command.<br><br><strong>Mission:</strong> Use a <strong>for</strong> loop to print '<strong>Engage Drone</strong>' <strong>five times</strong>.<br><br><em>Hint: To do something 5 times, you can use a loop like this:<br><br>for i in range(5):<br><br>Remember, the print() statement on the next line must be indented with <strong>Tab</strong>.</em>`,
+                validate: (output) => {
+                    const lines = output.trim().split(/\r?\n/).map(l => l.trim()).filter(l => l);
+                    return lines.length === 5 && lines.every(l => l === "Engage Drone");
+                },
+                success: "🛰️Drones synchronized. The path is clear.",
+                animationClass: 'animate-flight-path'
+            },
+            { //4 system breaking
+                story: `You've breached a subnetwork that controls the AI's core security layers. To cause a system-wide vulnerability, you must go through all the active protocols and flag them.<br><br><strong>Mission:</strong> Create a list named <strong>protocols</strong> containing <strong>'Prism', 'Photon', and 'Phoenix'</strong> <strong>Loop</strong> through the list and <strong>print</strong> each protocol name.<br><br><em>Hint: Make a list with square brackets [] and commas, like this:<br><br>list_name = ['a', 'b']<br><br>Then loop through it with:<br><br>for item in list_name:<br><br>Don't forget to use <strong>Tab</strong> on the print() line!</em>`,
+                validate: (output) => /prism/i.test(output) && /photon/i.test(output) && /phoenix/i.test(output),
+                success: "✅Protocols flagged. System defenses are fracturing!",
+                animationClass: 'animate-fracture' // this is now the fracturing animation
+            },
+            { //5 ai awaken
+                story: `The Sunstrike security mainframe looms before you. You must issue a controlled activation.<br><br><strong>Mission:</strong> <strong>Define</strong> a function <strong>activate_AI()</strong> that <strong>prints 'AI core under your command.'</strong> Then <strong>call</strong> it.<br><br><em>Hint: Define a function with def function_Name():<br><br>The code inside the function must be indented with the <strong>Tab</strong> key. Then call it on a new line without an indent: function_Name()</em>`,
+                validate: (output) => output.trim().toLowerCase().includes("ai core under your command"),
+                success: "🤖The AI awakens. The mainframe is yours.",
+                animationClass: 'trigger-gif'
+            },
+            { //6 hello you
+                story: `<strong>IDENTITY MATRIX</strong><br><br>A holographic interface flickers: <strong>'Enter your alias for system recognition.'</strong><br><br><strong>Mission:</strong> Create a <strong>variable</strong> named <strong>alias</strong> and set it to your hacker name (e.g., 'Glitch'). <strong>Print 'Greetings, ' followed by your alias.</strong><br><br><em>Hint: You can print text and a variable together using a comma, like this: print('Greetings, '+ variable_Name)</em>`,
+                validate: function(output) { // using a different function style for variety
+                    return /greetings,/i.test(output);
+                },
+                success: "🌐IDENTITY CONFIRMED. You’ve rewritten the code of Sunstrike and saved the world. You are now the NOVA Architect.",
+                animationClass: null // handle this in runCode function
+            }
+        ];
+
+        let level_index = 0;
+        
+        const storyEl = document.getElementById('story-text');
+        const editor = document.getElementById('code-editor');
+        const output = document.getElementById('output-area');
+        const hackButton = document.getElementById('run-button');
+        const gameContainer = document.getElementById('game-container'); // grabbing the container to animate it
+
+        function handleTabKey(e) {
+            if (e.key == 'Tab') {
+                e.preventDefault();
+                var start = editor.selectionStart; var end = editor.selectionEnd;
+                editor.value = editor.value.substring(0, start) + "    " + editor.value.substring(end);
+                editor.selectionStart = editor.selectionEnd = start + 4;
+            }
+        }
+        editor.addEventListener('keydown', handleTabKey);
+
+        // helper function to make the error shake replayable
+        function triggerErrorShake() {
+            gameContainer.classList.remove('animate-error-shake');
+            void gameContainer.offsetWidth; // to force browser to reflow
+            gameContainer.classList.add('animate-error-shake');
+        }
+
+        async function runCode() {
+            var code = editor.value;
+            const level = levelsData[level_index];
+            output.textContent = '';
+            output.className = '';
+            
+            hackButton.disabled = true;
+            hackButton.textContent = "Running...";
+
+            Sk.configure({
+                output: function(text) { output.textContent += text; },
+                read: function(x) {
+                    if (Sk.builtinFiles === undefined || Sk.builtinFiles["files"][x] === undefined)
+                        throw new Error("File not found: '" + x + "'");
+                    return Sk.builtinFiles["files"][x];
+                }
+            });
+
+            try {
+                // this is where everythhing gets calcaualted
+                await Sk.misceval.asyncToPromise(function() {
+                    return Sk.importMainWithBody("<stdin>", false, code, true);
+                });
+
+                const isCorrect = level.validate(output.textContent);
+
+                if (isCorrect) {
+                    output.className = 'success';
+                    output.textContent = "✅ " + level.success;
+                    
+                    // for the last level, use alias in animation (outdated comment)
+                    // update: cant get this to work, repurposing to game over screen
+                    if (level_index === levelsData.length - 1) {
+                        // trying to fix alias animation bug where it doesnt always capture the name (gave up)
+                        let alias = 'project complete'; // now a game over
+                        // tried to make it more reliable, still didnt work
+                        const match = output.textContent.trim().match(/greetings,\s*(.*)/i);
+                        if (match && match[1] && match[1].trim() !== '') {
+                            alias = match[1].trim().replace(/\./g, '');
+                        }
+
+                        const aliasEl = document.createElement('div');
+                        aliasEl.className = 'alias-overlay';
+                        aliasEl.textContent = alias;
+                        gameContainer.appendChild(aliasEl);
+
+                    // check if need to show the gif
+                    } else if (level.animationClass === 'trigger-gif') {
+                        document.getElementById('level-gif').classList.add('show');
+
+                    } else if (level.animationClass) { // otherwise play other animation
+                        gameContainer.classList.add(level.animationClass);
+                    }
+                    
+                    level_index = level_index + 1;
+                    if (level_index < levelsData.length) {
+                        setTimeout(function() { 
+                            // hide gif before next level
+                            document.getElementById('level-gif').classList.remove('show');
+                            // clean up the animation class so it can play again next time
+                            if (level.animationClass) {
+                                gameContainer.classList.remove(level.animationClass);
+                            }
+                            loadNextChallenge(level_index) 
+                        }, 3500); // wait a bit before next level
+                    } else {
+                        // end of game, hide everything after a delay
+                        setTimeout(function() {
+                            const aliasEl = gameContainer.querySelector('.alias-overlay');
+                            if (aliasEl) {
+                                gameContainer.removeChild(aliasEl);
+                            }
+                            hackButton.style.display = 'none';
+                            editor.style.display = 'none';
+                        }, 3000); // give the animation time to finish
+                    }
+                } else {
+                    output.className = 'error';
+                    output.textContent = `❌ Access Denied. Check your code and try again.\n\nOutput was:\n${output.textContent}`;
+                    triggerErrorShake(); // if its wrong, error shake
+                }
+            } catch (err) {
+                // using this for error handling and trial and error
+                output.className = 'error';
+                output.textContent = "⚠️ Error: " + err.toString();
+                triggerErrorShake(); // also shake on python errors
+            } finally {
+                var gameNotOver = level_index < levelsData.length;
+                // only reenable the button if the answer was wrong
+                if (gameNotOver && !output.classList.contains('success')) {
+                    hackButton.disabled = false;
+                    
+                    // refactor this button logic later to be less messy
+                    var isFinal = (level_index === levelsData.length - 1);
+                    hackButton.textContent = isFinal ? "Deploy Final Hack" : "Deploy Hack";
+                }
+            }
+        }
+        
+        function loadNextChallenge(lvl) {
+            const levelData = levelsData[lvl];
+            storyEl.innerHTML = levelData.story;
+            editor.value = '';
+            output.textContent = '';
+            output.className = '';
+            hackButton.disabled = false;
+
+            var isFinalLevel = (lvl === levelsData.length - 1);
+            hackButton.textContent = isFinalLevel ? "Deploy Final Hack" : "Deploy Hack";
+        }
+
+        loadNextChallenge(level_index);
+    </script>
+</body>
+<div id="disclaimer">Designed by Suriyah Saravanan</div>
+</html>
